@@ -7,7 +7,10 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Home\ProductController;
+use App\Http\Controllers\Admin\ProviderController;
+use App\Http\Controllers\Admin\ProvideController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\GoodsReceipt;
 use App\Http\Controllers\TranslateController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +39,11 @@ Route::group(['prefix' => 'bill', 'as' => 'bill.'], function () {
 Route::get('/brand', [BrandController::class, 'getPaginate'])->name('brand.index');
 Route::get('/category', [CategoryController::class, 'getPaginate'])->name('category.index');
 Route::get('/user', [UserController::class, 'getPaginate'])->name('user.index');
+Route::get('/provider', [ProviderController::class, 'getPaginate'])->name('provider.index');
+Route::get('/provide', [ProvideController::class, 'getPaginate'])->name('provide.index');
+Route::get('/GoodsReceipt', [GoodsReceipt::class, 'getPaginate'])->name('GoodsReceipt.index');
+Route::get('/getProductsByProvider/{providerId}', [GoodsReceipt::class, 'getProductsByProvider']);
+Route::get('/ReceiptDetail/{id}', [GoodsReceipt::class, 'getReceiptDetail']);
 
 Route::group(['prefix' => 'setting', 'as' => 'setting.'], function () {
     Route::get('/', [SettingController::class, 'index'])->name('index');

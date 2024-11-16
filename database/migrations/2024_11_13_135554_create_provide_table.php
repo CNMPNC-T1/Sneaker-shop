@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bill_details', function (Blueprint $table) {
-            $table->foreignId('bill_id')->constrained();
+        Schema::create('provides', function (Blueprint $table) {
+            $table->foreignId('provider_id')->constrained();
             $table->foreignId('product_id')->constrained();
-            $table->integer('quantity')->default(1);
-            $table->float('price')->default(0);
+            $table->integer('status')->default(0);
+            $table->timestamps();
         });
     }
 
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bill_details');
+        Schema::dropIfExists('provide');
     }
 };

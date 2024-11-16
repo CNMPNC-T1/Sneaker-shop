@@ -19,8 +19,27 @@ class HomeController extends Controller
         }
 
         $products = Product::leftJoin('product_reviews', 'products.id', '=', 'product_reviews.product_id')
-            ->select('products.*', DB::raw('AVG(product_reviews.rating) as avg_rating'))
-            ->groupBy('products.id')
+            ->select(
+                'products.id',
+                'products.name',
+                'products.category_id',
+                'products.brand_id',
+                'products.price',
+                'products.price_sale',
+                'products.image',
+                'products.stock_quantity',
+                DB::raw('AVG(product_reviews.rating) as avg_rating')
+            )
+            ->groupBy(
+                'products.id',
+                'products.name',
+                'products.category_id',
+                'products.brand_id',
+                'products.price',
+                'products.price_sale',
+                'products.image',
+                'products.stock_quantity'
+            )
             ->orderByDesc('avg_rating')
             ->get();
 

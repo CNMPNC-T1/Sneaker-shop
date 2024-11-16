@@ -6,7 +6,10 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProviderController;
+use App\Http\Controllers\Admin\ProvideController;
 use App\Http\Controllers\Admin\CurrencyController;
+use App\Http\Controllers\Admin\GoodsReceipt;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Models\Category;
@@ -55,6 +58,34 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/edit/{id}', [CategoryController::class, 'update'])->name('update');
         Route::delete('/destroy/{id}', [CategoryController::class, 'destroy'])->name('destroy');
     });
+
+    //route provider
+    Route::group(['prefix' => 'provider', 'as' => 'provider.'], function () {
+        Route::get('/', [ProviderController::class, 'index'])->name('index');
+        Route::get('/create', [ProviderController::class, 'create'])->name('create');
+        Route::post('/create', [ProviderController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [ProviderController::class, 'edit'])->name('edit');
+        Route::put('/edit/{id}', [ProviderController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [ProviderController::class, 'destroy'])->name('destroy');
+    });
+
+    //route provide
+    Route::group(['prefix' => 'provide', 'as' => 'provide.'], function () {
+        Route::get('/', [ProvideController::class, 'index'])->name('index');
+        Route::get('/create', [ProvideController::class, 'create'])->name('create');
+        Route::post('/create', [ProvideController::class, 'store'])->name('store');
+        Route::get('/edit/{provider_id}/{product_id}', [ProvideController::class, 'edit'])->name('edit');
+        Route::put('/edit/{provider_id}/{product_id}', [ProvideController::class, 'update'])->name('update');
+        Route::delete('/destroy/{provider_id}/{product_id}', [ProvideController::class, 'destroy'])->name('destroy');
+    });
+
+    // route goods receipt
+    Route::group(['prefix' => 'GoodsReceipt', 'as' => 'GoodsReceipt.'], function () {
+        Route::get('/', [GoodsReceipt::class, 'index'])->name('index');
+        Route::get('/create', [GoodsReceipt::class, 'create'])->name('create');
+        Route::post('/create', [GoodsReceipt::class, 'store'])->name('store');
+    });
+
 
     //route user
     Route::group(['prefix' => 'user', 'as' => 'user.'], function () {
