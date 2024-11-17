@@ -55,6 +55,15 @@ class GoodsReceipt extends Controller
 
         $productData = json_decode($request->input('goods_receipt'), true);
         foreach ($productData as $product) {
+            $existingProduct = Product::find($product['productId']);
+            if ($existingProduct) {
+                $existingProduct->stock_quantity += $product['amount'];
+
+                $existingProduct->price = $product['price'] * 1.1;
+
+                $existingProduct->save();
+            }
+
             receipt_detail::create([
                 'goods_receipt_id' => $goodsReceipt->id,
                 'product_id' => $product['productId'],
@@ -65,6 +74,36 @@ class GoodsReceipt extends Controller
 
         return redirect()->route('admin.GoodsReceipt.index')->with('success', 'Lưu thành công vào database');
     }
+
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'provider_id' => 'required|exists:providers,id',
+    //         'date' => 'required|date',
+    //         'sum' => 'required|numeric',
+    //     ]);
+
+    //     // Tạo goods_receipt mới
+    //     $goodsReceipt = goods_receipt::create([
+    //         'provider_id' => $request->provider_id,
+    //         'date' => $request->date,
+    //         'sum' => $request->sum,
+    //     ]);
+
+    //     $productData = json_decode($request->input('goods_receipt'), true);
+    //     foreach ($productData as $product) {
+    //         $product::update(['quantity' => $product['amount']])->where('id', $product['productId'])->first();
+    //         $product->save();
+    //         receipt_detail::create([
+    //             'goods_receipt_id' => $goodsReceipt->id,
+    //             'product_id' => $product['productId'],
+    //             'amount' => $product['amount'],
+    //             'price' => $product['price'],
+    //         ]);
+    //     }
+
+    //     return redirect()->route('admin.GoodsReceipt.index')->with('success', 'Lưu thành công vào database');
+    // }
 
 
     public function getProductsByProvider($providerId)

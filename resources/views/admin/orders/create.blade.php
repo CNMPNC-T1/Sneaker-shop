@@ -154,10 +154,10 @@
 
             if (existingRow) {
                 // Nếu sản phẩm đã có, cập nhật số lượng và giá trị
-                const existingAmount = parseInt(existingRow.cells[1].textContent);
+                const existingAmount = parseInt(existingRow.cells[1].querySelector('input').value);
                 const newAmount = existingAmount + 1;
-                existingRow.cells[1].textContent = newAmount;
-                existingRow.cells[2].textContent = (price * newAmount).toFixed(2);
+                existingRow.cells[1].querySelector('input').value = newAmount;
+                existingRow.cells[2].querySelector('input').value = (price * newAmount).toFixed(2);
 
                 // Cập nhật lại tổng giá trị
                 totalSum += price;
@@ -166,18 +166,18 @@
                 // Cập nhật mảng sản phẩm
                 const productInCart = productsInCart.find(p => p.productId === productId);
                 if (productInCart) {
-                    productInCart.amount += 1;
-                    productInCart.totalPrice = productInCart.amount * price;
+                    productInCart.amount = newAmount;
+                    productInCart.totalPrice = newAmount * price;
                 }
             } else {
                 // Nếu sản phẩm chưa có, thêm mới vào bảng
                 const row = receiptDetailsTable.insertRow();
                 row.innerHTML = `
-            <td>${productName}</td>
-            <td>1</td>
-            <td>${(price).toFixed(2)}</td>
-            <td><button type="button" class="btn btn-danger btn-sm remove-product-btn">Remove</button></td>
-        `;
+                <td>${productName}</td>
+                <td><input type="number" min="1" class="form-control amount-input" value="1"></td>
+                <td><input type="number" step="0.01" class="form-control price-input" value="${price.toFixed(2)}"></td>
+                <td><button type="button" class="btn btn-danger btn-sm remove-product-btn">Remove</button></td>
+            `;
                 totalSum += price;
                 sumInput.value = totalSum.toFixed(2);
 
@@ -192,7 +192,8 @@
 
                 // Thêm sự kiện cho nút xóa sản phẩm
                 row.querySelector('.remove-product-btn').addEventListener('click', function() {
-                    const rowTotal = parseFloat(row.cells[2].textContent);
+                    const rowAmount = parseInt(row.querySelector('.amount-input').value);
+                    const rowTotal = parseFloat(row.querySelector('.price-input').value) * rowAmount;
                     totalSum -= rowTotal;
                     sumInput.value = totalSum.toFixed(2);
                     row.remove();
@@ -201,6 +202,44 @@
                     const productIndex = productsInCart.findIndex(p => p.productId === productId);
                     if (productIndex !== -1) {
                         productsInCart.splice(productIndex, 1);
+                    }
+                });
+
+                // Cập nhật lại tổng giá trị khi thay đổi giá
+                row.querySelector('.price-input').addEventListener('change', function() {
+                    const newPrice = parseFloat(this.value);
+                    const newAmount = parseInt(row.querySelector('.amount-input').value);
+                    if (isNaN(newPrice) || newPrice <= 0) {
+                        alert('Giá không hợp lệ');
+                        return;
+                    }
+
+                    const productInCart = productsInCart.find(p => p.productId === productId);
+                    if (productInCart) {
+                        totalSum -= productInCart.totalPrice;
+                        productInCart.price = newPrice;
+                        productInCart.totalPrice = newPrice * newAmount;
+                        totalSum += productInCart.totalPrice;
+                        sumInput.value = totalSum.toFixed(2);
+                    }
+                });
+
+                // Cập nhật lại tổng giá trị khi thay đổi số lượng
+                row.querySelector('.amount-input').addEventListener('change', function() {
+                    const newAmount = parseInt(this.value);
+                    const newPrice = parseFloat(row.querySelector('.price-input').value);
+                    if (isNaN(newAmount) || newAmount <= 0) {
+                        alert('Số lượng không hợp lệ');
+                        return;
+                    }
+
+                    const productInCart = productsInCart.find(p => p.productId === productId);
+                    if (productInCart) {
+                        totalSum -= productInCart.totalPrice;
+                        productInCart.amount = newAmount;
+                        productInCart.totalPrice = newAmount * newPrice;
+                        totalSum += productInCart.totalPrice;
+                        sumInput.value = totalSum.toFixed(2);
                     }
                 });
             }
