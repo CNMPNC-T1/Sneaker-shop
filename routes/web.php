@@ -30,7 +30,8 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/greeting/{locale}', [LocalizationController::class, 'greeting'])->name('locale');
 
 // Send Mail
-Route::get('/mail', [MailController::class, 'send']);
+// Route::get('/mail', [MailController::class, 'send']);
+// web.php
 
 // Chat app
 Route::post('/chat/broadcast/{senderId}', [ChatController::class, 'broadcast'])->name('chat.broadcast');

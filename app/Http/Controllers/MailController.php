@@ -9,11 +9,12 @@ class MailController extends Controller
 {
     public function send(Request $request)
     {
-        Mail::send('mail.index', ['name' => 'thanh'], function ($message) {
-            $message->from('chithanh18042003@gmail.com', 'Chis Thanh');
-            $message->to('chithanh18042003@gmail.com', 'Chis Thanh');
-            $message->subject('Sneaker Shop');
-        });
-        return redirect("/");
+        // Lấy thông tin người dùng đã đăng nhập
+        $user = auth()->user();
+
+        // Gửi email cho người dùng hiện tại
+        Mail::to(auth()->user()->email)->send(new sendmailNotification($user));
+
+        return redirect("/")->with('success', 'Email đã được gửi thành công!');
     }
 }

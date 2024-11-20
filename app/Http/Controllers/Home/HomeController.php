@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class HomeController extends Controller
 {
@@ -19,10 +20,14 @@ class HomeController extends Controller
         }
 
         $products = Product::leftJoin('product_reviews', 'products.id', '=', 'product_reviews.product_id')
-            ->select('products.*', DB::raw('AVG(product_reviews.rating) as avg_rating'))
-            ->groupBy('products.id')
-            ->orderByDesc('avg_rating')
-            ->get();
+
+        ->select('products.*', DB::raw('AVG(product_reviews.rating) as avg_rating'))
+
+        ->groupBy('products.id')
+
+        ->orderByDesc('avg_rating')
+
+        ->get();
 
         $products->transform(function ($product) {
             $product->image = $product->url_img;

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Home;
-
+use App\Mail\SendMailNotification;
 use App\Enums\BillStatusEnum;
 use App\Enums\CartStatusEnum;
 use App\Enums\PaymentMethodEnum;
@@ -12,6 +12,8 @@ use App\Models\BillDetail;
 use App\Models\ShoppingCart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail; 
+
 
 class OrderController extends Controller
 {
@@ -20,25 +22,75 @@ class OrderController extends Controller
     {
         $user = auth()->user();
         $cart = new ShoppingCart();
+        //Mail::to(auth()->user()->email)->send(new sendmailNotification($user));
+
 
         return view('home.order.checkout', compact('user', 'cart'));
     }
 
+
+   
+
+    // public function update(Request $request)
+    // {
+       
+    //     $request->validate([
+    //         'firtsname' => 'required|string|max:255',
+    //         'lastname' => 'required|string|max:255',
+    //         'phone' => 'required|string|max:255',
+    //         'address' => 'required|string|max:255',
+    //     ]);
+
+    //     $user = auth()->user();
+    //     $user = auth()->user();  // Lấy thông tin người dùng hiện tại
+       
+    
+    //     $user->update($request->only('firtsname', 'lastname', 'phone', 'address'));
+
+    //     $cart = new ShoppingCart();
+    //     $totalPrice =  $cart->getTotalPrice();
+
+    //     $order = new Bill();
+    //     $order->user_id = auth()->id();
+    //     $order->total = $totalPrice;
+    //     $order->delivery_date = now();
+    //     $order->payment_status = 0;
+    //     $order->payment_method = 0;
+    //     $order->status = BillStatusEnum::ORDER;
+    //     $order->save();
+
+    //     $orderDetails = [];
+    //     foreach ($cart->items as $item) {
+    //         $orderDetails[] = BillDetail::create([
+    //             'bill_id' => $order->id,
+    //             'product_id' => $item['id'],
+    //             'quantity' => $item['quantity'],
+    //             'price' => $item['price'],
+    //         ]);
+    //     }
+
+    //     $cart->clearCart();
+       
+
+    //     return redirect()->route('bill', ["order_id" => $order->id]);
+    // }
     public function update(Request $request)
     {
+        // Validate và cập nhật thông tin người dùng
         $request->validate([
             'firtsname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
             'phone' => 'required|string|max:255',
             'address' => 'required|string|max:255',
         ]);
-
+    
         $user = auth()->user();
         $user->update($request->only('firtsname', 'lastname', 'phone', 'address'));
-
+    
+        // Lưu đơn hàng và chi tiết đơn hàng
         $cart = new ShoppingCart();
-        $totalPrice =  $cart->getTotalPrice();
-
+        $totalPrice = $cart->getTotalPrice();
+    
         $order = new Bill();
         $order->user_id = auth()->id();
         $order->total = $totalPrice;
@@ -47,19 +99,22 @@ class OrderController extends Controller
         $order->payment_method = 0;
         $order->status = BillStatusEnum::ORDER;
         $order->save();
-
-        $orderDetails = [];
+    
         foreach ($cart->items as $item) {
-            $orderDetails[] = BillDetail::create([
+            BillDetail::create([
                 'bill_id' => $order->id,
                 'product_id' => $item['id'],
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
             ]);
         }
-
+    
+        // Truyền thông tin đơn hàng vào email
+        Mail::to($user->email)->send(new SendMailNotification($user, $order));
+    
+        // Xóa giỏ hàng
         $cart->clearCart();
-
+    
         return redirect()->route('bill', ["order_id" => $order->id]);
     }
 
