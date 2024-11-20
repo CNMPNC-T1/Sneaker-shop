@@ -1,7 +1,10 @@
 <?php
 
 namespace App\Http\Controllers\Home;
+
 use App\Mail\SendMailNotification;
+
+
 use App\Enums\BillStatusEnum;
 use App\Enums\CartStatusEnum;
 use App\Enums\PaymentMethodEnum;
@@ -10,9 +13,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Bill;
 use App\Models\BillDetail;
 use App\Models\ShoppingCart;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail; 
+
+
+use App\Models\Voucher;
+use App\Models\Voucher_bills;
+
 
 
 class OrderController extends Controller
@@ -22,75 +31,28 @@ class OrderController extends Controller
     {
         $user = auth()->user();
         $cart = new ShoppingCart();
-        //Mail::to(auth()->user()->email)->send(new sendmailNotification($user));
+
 
 
         return view('home.order.checkout', compact('user', 'cart'));
     }
 
 
-   
-
-    // public function update(Request $request)
-    // {
-       
-    //     $request->validate([
-    //         'firtsname' => 'required|string|max:255',
-    //         'lastname' => 'required|string|max:255',
-    //         'phone' => 'required|string|max:255',
-    //         'address' => 'required|string|max:255',
-    //     ]);
-
-    //     $user = auth()->user();
-    //     $user = auth()->user();  // Lấy thông tin người dùng hiện tại
-       
-    
-    //     $user->update($request->only('firtsname', 'lastname', 'phone', 'address'));
-
-    //     $cart = new ShoppingCart();
-    //     $totalPrice =  $cart->getTotalPrice();
-
-    //     $order = new Bill();
-    //     $order->user_id = auth()->id();
-    //     $order->total = $totalPrice;
-    //     $order->delivery_date = now();
-    //     $order->payment_status = 0;
-    //     $order->payment_method = 0;
-    //     $order->status = BillStatusEnum::ORDER;
-    //     $order->save();
-
-    //     $orderDetails = [];
-    //     foreach ($cart->items as $item) {
-    //         $orderDetails[] = BillDetail::create([
-    //             'bill_id' => $order->id,
-    //             'product_id' => $item['id'],
-    //             'quantity' => $item['quantity'],
-    //             'price' => $item['price'],
-    //         ]);
-    //     }
-
-    //     $cart->clearCart();
-       
-
-    //     return redirect()->route('bill', ["order_id" => $order->id]);
-    // }
     public function update(Request $request)
     {
-        // Validate và cập nhật thông tin người dùng
         $request->validate([
             'firtsname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
             'phone' => 'required|string|max:255',
             'address' => 'required|string|max:255',
         ]);
-    
+
         $user = auth()->user();
         $user->update($request->only('firtsname', 'lastname', 'phone', 'address'));
-    
-        // Lưu đơn hàng và chi tiết đơn hàng
+
         $cart = new ShoppingCart();
-        $totalPrice = $cart->getTotalPrice();
-    
+        $totalPrice =  $cart->getTotalPrice();
+
         $order = new Bill();
         $order->user_id = auth()->id();
         $order->total = $totalPrice;
@@ -99,23 +61,62 @@ class OrderController extends Controller
         $order->payment_method = 0;
         $order->status = BillStatusEnum::ORDER;
         $order->save();
-    
+
+        $orderDetails = [];
         foreach ($cart->items as $item) {
-            BillDetail::create([
+            $orderDetails[] = BillDetail::create([
                 'bill_id' => $order->id,
                 'product_id' => $item['id'],
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
             ]);
         }
-    
-        // Truyền thông tin đơn hàng vào email
         Mail::to($user->email)->send(new SendMailNotification($user, $order));
-    
-        // Xóa giỏ hàng
         $cart->clearCart();
-    
+
         return redirect()->route('bill', ["order_id" => $order->id]);
+    }
+
+
+    
+
+    public function checkVoucher(Request $request)
+    {
+        $request->validate([
+            'voucher' => 'required|string',
+            'subtotal' => 'required|numeric|min:0'
+        ]);
+
+        $voucherCode = $request->input('voucher');
+        $subtotal = $request->input('subtotal');
+
+        $voucher = Voucher::where('value', $voucherCode)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        if (!$voucher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher không tồn tại hoặc đã hết hạn.'
+            ]);
+        }
+
+        $discount = 0;
+        if ($voucher->type === 'percent') {
+            $discount = ($subtotal * $voucher->amount) / 100;
+        } elseif ($voucher->type === 'fixed') {
+            $discount = $voucher->amount;
+        }
+
+        // Lưu discount vào session để validate khi submit form
+        session(['voucher_discount' => $discount]);
+
+        return response()->json([
+            'success' => true,
+            'discount' => $discount,
+            'message' => 'Áp dụng voucher thành công!'
+        ]);
     }
 
     public function Bill(Request $request)
@@ -229,4 +230,7 @@ class OrderController extends Controller
 
         return redirect()->route('show-user')->with('error', 'Order not found or you are not authorized to cancel this order.');
     }
+
 }
+
+

@@ -9,7 +9,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+
 use Illuminate\Support\Facades\Mail;
+
+
 
 class HomeController extends Controller
 {
@@ -28,6 +31,7 @@ class HomeController extends Controller
         ->orderByDesc('avg_rating')
 
         ->get();
+
 
         $products->transform(function ($product) {
             $product->image = $product->url_img;

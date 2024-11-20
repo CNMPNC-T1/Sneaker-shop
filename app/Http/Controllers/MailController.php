@@ -9,6 +9,7 @@ class MailController extends Controller
 {
     public function send(Request $request)
     {
+
         // Lấy thông tin người dùng đã đăng nhập
         $user = auth()->user();
 
@@ -16,5 +17,6 @@ class MailController extends Controller
         Mail::to(auth()->user()->email)->send(new sendmailNotification($user));
 
         return redirect("/")->with('success', 'Email đã được gửi thành công!');
+
     }
 }
