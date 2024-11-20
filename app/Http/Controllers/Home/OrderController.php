@@ -10,6 +10,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Bill;
 use App\Models\BillDetail;
 use App\Models\ShoppingCart;
+use App\Models\Voucher;
+use App\Models\Voucher_bills;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -37,25 +39,63 @@ class OrderController extends Controller
         $user->update($request->only('firtsname', 'lastname', 'phone', 'address'));
 
         $cart = new ShoppingCart();
-        $order=$this->processCart($cart);
 
-        return redirect()->route('bill', ["order_id" => $order->id]);
+        // Xử lý voucher - lấy từ hidden input
+        $voucherCode = $request->input('applied_voucher');
+        $discount = 0;
+        $voucher = null;
+
+        if ($voucherCode) {
+            $voucher = Voucher::where('value', $voucherCode)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
+
+            if ($voucher) {
+                // Validate lại discount amount từ session
+                $sessionDiscount = session('voucher_discount');
+
+                if ($voucher->type === 'percent') {
+                    $discount = ($cart->totalPrice * $voucher->amount) / 100;
+                } elseif ($voucher->type === 'fixed') {
+                    $discount = $voucher->amount;
+                }
+
+                // Kiểm tra xem discount có khớp với session không
+                if ($sessionDiscount != $discount) {
+                    return redirect()->back()->withErrors(['voucher' => 'Invalid discount amount.']);
+                }
+            } else {
+                return redirect()->back()->withErrors(['voucher' => 'Invalid or expired voucher code.']);
+            }
+        }
+
+        try {
+            DB::beginTransaction();
+            $order = $this->processCart($cart, $discount, $voucher);
+            DB::commit();
+            return redirect()->route('bill', ['order_id' => $order->id]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'An error occurred while processing your order.']);
+        }
     }
-        public function processCart(ShoppingCart $cart)
-    {
-        $totalPrice = $cart->getTotalPrice();
 
-        // Tạo hóa đơn mới
+    public function processCart(ShoppingCart $cart, $discount = 0, $voucher = null)
+    {
+        $totalPrice = max(0, $cart->getTotalPrice() - $discount);
+        $shipping = 20000; // Thêm phí ship
+
         $order = new Bill();
         $order->user_id = auth()->id();
-        $order->total = $totalPrice;
+        $order->total = $totalPrice + $shipping; // Cộng thêm phí ship
         $order->delivery_date = now();
         $order->payment_status = 0;
         $order->payment_method = 0;
         $order->status = BillStatusEnum::ORDER;
         $order->save();
 
-        // Tạo chi tiết hóa đơn
+        // Lưu chi tiết sản phẩm
         foreach ($cart->items as $item) {
             BillDetail::create([
                 'bill_id' => $order->id,
@@ -65,12 +105,58 @@ class OrderController extends Controller
             ]);
         }
 
-        // Xóa giỏ hàng
-        $cart->clearCart();
+        // Lưu thông tin voucher nếu có
+        if ($voucher) {
+            DB::table('voucher_bills')->insert([
+                'bill_id' => $order->id,
+                'vouchers_id' => $voucher->id_voucher,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-        return $order; // Trả về hóa đơn mới
+        $cart->clearCart();
+        return $order;
     }
 
+    public function checkVoucher(Request $request)
+    {
+        $request->validate([
+            'voucher' => 'required|string',
+            'subtotal' => 'required|numeric|min:0'
+        ]);
+
+        $voucherCode = $request->input('voucher');
+        $subtotal = $request->input('subtotal');
+
+        $voucher = Voucher::where('value', $voucherCode)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        if (!$voucher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher không tồn tại hoặc đã hết hạn.'
+            ]);
+        }
+
+        $discount = 0;
+        if ($voucher->type === 'percent') {
+            $discount = ($subtotal * $voucher->amount) / 100;
+        } elseif ($voucher->type === 'fixed') {
+            $discount = $voucher->amount;
+        }
+
+        // Lưu discount vào session để validate khi submit form
+        session(['voucher_discount' => $discount]);
+
+        return response()->json([
+            'success' => true,
+            'discount' => $discount,
+            'message' => 'Áp dụng voucher thành công!'
+        ]);
+    }
     public function Bill(Request $request)
     {
         $request = $request->all();

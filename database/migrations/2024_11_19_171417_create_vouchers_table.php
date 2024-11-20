@@ -17,6 +17,7 @@ return new class extends Migration
             $table->dateTime('end_date')->nullable();
             $table->string('value')->unique();
             $table->string('type')->nullable();
+            $table->decimal('amount', 10, 2)->nullable();
             $table->timestamps();
         });
     }
