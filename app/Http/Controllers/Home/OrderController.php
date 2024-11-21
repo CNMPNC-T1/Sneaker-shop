@@ -16,7 +16,7 @@ use App\Models\ShoppingCart;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail; 
+use Illuminate\Support\Facades\Mail;
 
 
 use App\Models\Voucher;
@@ -51,11 +51,11 @@ class OrderController extends Controller
         $user->update($request->only('firtsname', 'lastname', 'phone', 'address'));
 
         $cart = new ShoppingCart();
-        $totalPrice =  $cart->getTotalPrice();
+        $subtotal =  $cart->getTotalPrice();
 
         $order = new Bill();
         $order->user_id = auth()->id();
-        $order->total = $totalPrice;
+        $order->total = $subtotal; // Chúng ta sẽ cập nhật total sau khi tính discount
         $order->delivery_date = now();
         $order->payment_status = 0;
         $order->payment_method = 0;
@@ -71,14 +71,42 @@ class OrderController extends Controller
                 'price' => $item['price'],
             ]);
         }
+
+        $discount = 0;
+        if ($request->voucher) {
+            $voucher = Voucher::where('value', $request->voucher)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
+            if (!$voucher) {
+                return redirect()->back()->with('error', 'Voucher không tồn tại hoặc đã hết hạn.');
+            } else {
+                if ($voucher->type === 'percent') {
+                    $discount = ($subtotal * $voucher->amount) / 100;
+                } elseif ($voucher->type === 'fixed') {
+                    $discount = $voucher->amount;
+                }
+                Voucher_bills::create([
+                    'bill_id' => $order->id,
+                    'vouchers_id' => $voucher->id_voucher
+                ]);
+            }
+        }
+
+        $totalPrice = $subtotal - $discount;
+        $order->total = $totalPrice;
+        $order->save();
+
         Mail::to($user->email)->send(new SendMailNotification($user, $order));
         $cart->clearCart();
 
-        return redirect()->route('bill', ["order_id" => $order->id]);
+        return redirect()->route('bill', ["order_id" => $order->id])->with([
+            'discount' => $discount,
+            'subtotal' => $subtotal,
+            'totalPrice' => $totalPrice,
+            'success' => 'Order placed successfully.'
+        ]);
     }
-
-
-    
 
     public function checkVoucher(Request $request)
     {
@@ -209,7 +237,9 @@ class OrderController extends Controller
             $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
         }
         $returnData = array(
-            'code' => '00', 'message' => 'success', 'data' => $vnp_Url
+            'code' => '00',
+            'message' => 'success',
+            'data' => $vnp_Url
         );
         if (isset($_POST['redirect'])) {
             header('Location: ' . $vnp_Url);
@@ -230,7 +260,4 @@ class OrderController extends Controller
 
         return redirect()->route('show-user')->with('error', 'Order not found or you are not authorized to cancel this order.');
     }
-
 }
-
-

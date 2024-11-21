@@ -122,7 +122,7 @@
         // Fetch products by provider
         providerSelect.addEventListener('change', function() {
             const providerId = this.value;
-            productSelect.innerHTML = '<option value="">Select Product</option>';
+            productSe6lect.innerHTML = '<option value="">Select Product</option>';
 
             fetch(`/api/getProductsByProvider/${providerId}`)
                 .then(response => response.text())
