@@ -40,12 +40,26 @@
                                 data-id="{{ $product->id }}">Add to Cart
                             </button>
                         </div>
-                        <h3 class="mt-4">Overview with AI</h3>
-                        <a class="btn primary-btn dropdown-item mb-4" href="https://3dac6dd2caf227c638.gradio.live" target="_blank">Model</a>
-                        <a class="btn primary-btn dropdown-item" href="https://1593a1240e71a5c1a7.gradio.live" target="_blank">Background</a>
+                     
+                <h3 class="mt-4">Overview with AI</h3>
+                
+                <!-- Nút liên kết đến Model -->
+                <a class="btn primary-btn dropdown-item mb-4" 
+                href="https://3dac6dd2caf227c638.gradio.live" 
+                target="_blank">Model</a>
+                
+                <!-- Nút liên kết đến Background -->
+                <a class="btn primary-btn dropdown-item" 
+                href="https://1593a1240e71a5c1a7.gradio.live" 
+                target="_blank">Background</a>
+                
+                <!-- Nút Add to Cart -->
+                 
+                <button class="btn primary-btn m-3" data-id="{{ $product->id }}">Add to Cart</button>
 
-                                data-id="{{ $product->id }}">Add to Cart</button>
-                        </div>
+
+            
+
 
 
                     </div>
