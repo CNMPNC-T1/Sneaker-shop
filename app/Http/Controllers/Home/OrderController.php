@@ -71,7 +71,7 @@ class OrderController extends Controller
                 'price' => $item['price'],
             ]);
         }
-        Mail::to("lebuithienduc123@gmail.com")->send(new SendMailNotification($user, $order));
+        Mail::to($user->email)->send(new SendMailNotification($user, $order));
         $cart->clearCart();
 
         return redirect()->route('bill', ["order_id" => $order->id]);

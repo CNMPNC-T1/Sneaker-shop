@@ -53,9 +53,7 @@
                 href="https://1593a1240e71a5c1a7.gradio.live" 
                 target="_blank">Background</a>
                 
-                <!-- Nút Add to Cart -->
-                 
-                <button class="btn primary-btn m-3" data-id="{{ $product->id }}">Add to Cart</button>
+            
 
 
             
