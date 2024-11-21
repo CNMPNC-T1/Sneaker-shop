@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('vouchers', function (Blueprint $table) {
-            //
-            $table->decimal('amount', 10, 2)->nullable()->after('type');
+        Schema::create('receipt_details', function (Blueprint $table) {
+            $table->foreignId('goods_receipt_id')->constrained('goods_receipt');
+            $table->foreignId('product_id')->constrained();
+            $table->integer('amount')->default(1);
+            $table->float('price')->default(0);
         });
     }
 
@@ -22,9 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('vouchers', function (Blueprint $table) {
-            //
-            $table->dropColumn('amount');
-        });
+        Schema::dropIfExists('receipt_detail');
     }
 };

@@ -14,7 +14,7 @@ use App\Http\Controllers\SocialiteController;
 use Illuminate\Support\Facades\Route;
 
 // Home
-Route::get('/',  fn () =>  redirect('/home'));
+Route::get('/',  fn() =>  redirect('/home'));
 Route::get('/home', [App\Http\Controllers\Home\HomeController::class, 'index'])->name('home');
 
 // Auth
