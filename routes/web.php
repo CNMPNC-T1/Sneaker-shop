@@ -30,7 +30,12 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/greeting/{locale}', [LocalizationController::class, 'greeting'])->name('locale');
 
 // Send Mail
+
+// Route::get('/mail', [MailController::class, 'send']);
+// web.php
+
 Route::get('/mail', [MailController::class, 'send']);
+
 
 // Chat app
 Route::post('/chat/broadcast/{senderId}', [ChatController::class, 'broadcast'])->name('chat.broadcast');
@@ -71,6 +76,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/infor-user', [InforUserController::class, 'show'])->name('show-user');
     Route::post('/updateUser/{id}', [InforUserController::class, 'updateUser'])->name('user.update');
     Route::get('/password', [InforUserController::class, 'showPass'])->name('password.change');
+
+    Route::post('/check-voucher', [OrderController::class, 'checkVoucher'])->name('check-voucher');
+
     Route::post('/order/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('order.cancel');
 });
 

@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Mail;
+
+
+
 class HomeController extends Controller
 {
     public function index()

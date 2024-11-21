@@ -62,10 +62,20 @@
                             <ul class="list list_2">
                                 <li><a href="#">Subtotal <span>{{ formatCurrency($cart->totalPrice) }}</span></a></li>
                                 <li><a href="#">Shipping <span>Flat rate: {{ formatCurrency(20000) }}</span></a></li>
+
+                                <li><a href="#">Discount <span id="discount">0</span></a></li>
+
                                 <li><a href="#">Total <span>
                                             {{ formatCurrency($cart->totalPrice + 20000) }}</span></a>
                                 </li>
                             </ul>
+
+
+
+                            <div class="form-group">
+                                <label for="voucher">Voucher Code</label>
+                                <input type="text" class="form-control" id="voucher" name="voucher" placeholder="Enter voucher code">
+                            </div>
 
 
                             <button type="submit" name="submit" id="btn-submit" class="btn primary-btn"
@@ -76,4 +86,8 @@
             </div>
         </div>
     </section>
+
+
+
 @endsection
+

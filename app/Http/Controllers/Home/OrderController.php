@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Home;
 
+use App\Mail\SendMailNotification;
+
+
 use App\Enums\BillStatusEnum;
 use App\Enums\CartStatusEnum;
 use App\Enums\PaymentMethodEnum;
@@ -10,8 +13,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Bill;
 use App\Models\BillDetail;
 use App\Models\ShoppingCart;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail; 
+
+
+use App\Models\Voucher;
+use App\Models\Voucher_bills;
+
+
 
 class OrderController extends Controller
 {
@@ -21,8 +32,11 @@ class OrderController extends Controller
         $user = auth()->user();
         $cart = new ShoppingCart();
 
+
+
         return view('home.order.checkout', compact('user', 'cart'));
     }
+
 
     public function update(Request $request)
     {
@@ -57,10 +71,52 @@ class OrderController extends Controller
                 'price' => $item['price'],
             ]);
         }
-
+        Mail::to($user->email)->send(new SendMailNotification($user, $order));
         $cart->clearCart();
 
         return redirect()->route('bill', ["order_id" => $order->id]);
+    }
+
+
+    
+
+    public function checkVoucher(Request $request)
+    {
+        $request->validate([
+            'voucher' => 'required|string',
+            'subtotal' => 'required|numeric|min:0'
+        ]);
+
+        $voucherCode = $request->input('voucher');
+        $subtotal = $request->input('subtotal');
+
+        $voucher = Voucher::where('value', $voucherCode)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        if (!$voucher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher không tồn tại hoặc đã hết hạn.'
+            ]);
+        }
+
+        $discount = 0;
+        if ($voucher->type === 'percent') {
+            $discount = ($subtotal * $voucher->amount) / 100;
+        } elseif ($voucher->type === 'fixed') {
+            $discount = $voucher->amount;
+        }
+
+        // Lưu discount vào session để validate khi submit form
+        session(['voucher_discount' => $discount]);
+
+        return response()->json([
+            'success' => true,
+            'discount' => $discount,
+            'message' => 'Áp dụng voucher thành công!'
+        ]);
     }
 
     public function Bill(Request $request)
@@ -174,4 +230,7 @@ class OrderController extends Controller
 
         return redirect()->route('show-user')->with('error', 'Order not found or you are not authorized to cancel this order.');
     }
+
 }
+
+
