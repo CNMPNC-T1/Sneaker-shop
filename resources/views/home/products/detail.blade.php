@@ -41,13 +41,9 @@
                         </button>
                     </div>
                     <h3 class="mt-4">Overview with AI</h3>
-                    <a class="btn primary-btn dropdown-item mb-4" href="https://44d1d9b757fcd03376.gradio.live" target="_blank">Model</a>
-                    <a class="btn primary-btn dropdown-item" href="https://9ea1f714fa7239b187.gradio.live" target="_blank">Background</a>
-
-                    data-id="{{ $product->id }}">Add to Cart</button>
+                    <a class="btn primary-btn dropdown-item mb-4" href="https://a52e226688a0313eec.gradio.live" target="_blank">Model</a>
+                    <a class="btn primary-btn dropdown-item" href="https://7d59c6e2f2a5b7ee04.gradio.live" target="_blank">Background</a>
                 </div>
-
-
             </div>
         </div>
     </div>
